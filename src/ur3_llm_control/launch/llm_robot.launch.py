@@ -21,12 +21,11 @@ def generate_launch_description():
         ),
         launch_arguments={
             'ur_type': 'ur3',
-            'launch_rviz': 'true',
-          'description_file': os.path.join(
-            pkg_ur3_llm, 'urdf', 'ur3_table_mount.urdf.xacro'
-          ),
+            'description_file': os.path.join(
+                pkg_ur3_llm, 'urdf', 'ur3_table_mount.urdf.xacro'
+            ),
             'controllers_file': os.path.join(
-              pkg_ur3_llm, 'config', 'ur3_gripper_controllers.yaml'
+                pkg_ur3_llm, 'config', 'ur3_gripper_controllers.yaml'
             ),
             'launch_rviz': LaunchConfiguration('launch_rviz'),
             'gazebo_gui': LaunchConfiguration('gazebo_gui'),
@@ -43,13 +42,17 @@ def generate_launch_description():
       Node(
         package='controller_manager',
         executable='spawner',
-        arguments=['robotiq_gripper_controller', '-c', '/controller_manager'],
+        arguments=['simple_gripper_controller', '-c', '/controller_manager'],
         output='screen',
       ),
     ]
     
     # Function to create an SDF string for a colored box
-    def get_box_sdf(name, color_rgba, size="0.04 0.04 0.04"):
+    cube_size = " ".join(str(value) for value in scene.get(
+        'cube_size', [0.04, 0.04, 0.04]
+    ))
+
+    def get_box_sdf(name, color_rgba, size=cube_size):
         return f"""<?xml version="1.0" ?>
 <sdf version="1.6">
   <model name="{name}">
@@ -140,6 +143,8 @@ def generate_launch_description():
         )
 
     def get_zone_sdf(name, color_rgba):
+        marker_size = scene.get('zone_marker_size', [0.09, 0.09])
+        usable_size = scene.get('zone_usable_size', [0.075, 0.075])
         return f"""<?xml version="1.0" ?>
 <sdf version="1.6">
   <model name="{name}">
@@ -147,7 +152,7 @@ def generate_launch_description():
     <link name="link">
       <visual name="border">
         <pose>0 0 0 0 0 0</pose>
-        <geometry><box><size>0.09 0.09 0.001</size></box></geometry>
+        <geometry><box><size>{marker_size[0]} {marker_size[1]} 0.001</size></box></geometry>
         <material>
           <ambient>0.1 0.1 0.1 1</ambient>
           <diffuse>0.15 0.15 0.15 1</diffuse>
@@ -155,7 +160,7 @@ def generate_launch_description():
       </visual>
       <visual name="pad">
         <pose>0 0 0.0005 0 0 0</pose>
-        <geometry><box><size>0.075 0.075 0.001</size></box></geometry>
+        <geometry><box><size>{usable_size[0]} {usable_size[1]} 0.001</size></box></geometry>
         <material>
           <ambient>{color_rgba}</ambient>
           <diffuse>{color_rgba}</diffuse>

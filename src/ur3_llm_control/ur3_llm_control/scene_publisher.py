@@ -1,13 +1,20 @@
+import os
+
+from ament_index_python.packages import get_package_share_directory
+from geometry_msgs.msg import Pose
+from moveit_msgs.msg import (
+    AllowedCollisionEntry,
+    CollisionObject,
+    ObjectColor,
+    PlanningScene,
+    PlanningSceneComponents,
+)
+from moveit_msgs.srv import ApplyPlanningScene, GetPlanningScene
 import rclpy
 from rclpy.node import Node
-from moveit_msgs.msg import AllowedCollisionEntry, PlanningScene, PlanningSceneComponents, CollisionObject, ObjectColor
-from moveit_msgs.srv import ApplyPlanningScene, GetPlanningScene
 from shape_msgs.msg import SolidPrimitive
-from geometry_msgs.msg import Pose
-from std_msgs.msg import ColorRGBA
 import yaml
-import os
-from ament_index_python.packages import get_package_share_directory
+
 
 class ScenePublisher(Node):
     def __init__(self):
@@ -22,9 +29,8 @@ class ScenePublisher(Node):
         
         with open(scene_file, 'r') as f:
             self.scene = yaml.safe_load(f)
-        table = self.scene['table']
-        table_top = table['center'][2] + table['size'][2] / 2
         self.robot_base_height = self.scene.get('robot_base_height', 0.0)
+        self.cube_size = self.scene.get('cube_size', [0.04, 0.04, 0.04])
             
         self.timer = self.create_timer(2.0, self.publish_scene)
         self.get_logger().info('Scene publisher started')
@@ -83,7 +89,7 @@ class ScenePublisher(Node):
             
             box = SolidPrimitive()
             box.type = SolidPrimitive.BOX
-            box.dimensions = [0.04, 0.04, 0.04]
+            box.dimensions = self.cube_size
             
             pose = Pose()
             pos = obj_data['position']
@@ -105,23 +111,9 @@ class ScenePublisher(Node):
             scene_msg.object_colors.append(color)
 
         self.allowed_collision_pairs = {
-            frozenset(("wrist_3_link", "robotiq_85_base_link")),
-            frozenset(("robotiq_85_base_link", "robotiq_85_left_inner_knuckle_link")),
-            frozenset(("robotiq_85_base_link", "robotiq_85_left_knuckle_link")),
-            frozenset(("robotiq_85_base_link", "robotiq_85_right_inner_knuckle_link")),
-            frozenset(("robotiq_85_base_link", "robotiq_85_right_knuckle_link")),
-            frozenset(("robotiq_85_left_finger_link", "robotiq_85_left_finger_tip_link")),
-            frozenset(("robotiq_85_left_knuckle_link", "robotiq_85_left_finger_link")),
-            frozenset(("robotiq_85_left_inner_knuckle_link", "robotiq_85_left_finger_tip_link")),
-            frozenset(("robotiq_85_right_finger_link", "robotiq_85_right_finger_tip_link")),
-            frozenset(("robotiq_85_right_knuckle_link", "robotiq_85_right_finger_link")),
-            frozenset(("robotiq_85_right_inner_knuckle_link", "robotiq_85_right_finger_tip_link")),
-            frozenset(("robotiq_85_left_finger_tip_link", "robotiq_85_left_contact_pad")),
-            frozenset(("robotiq_85_right_finger_tip_link", "robotiq_85_right_contact_pad")),
-            frozenset(("robotiq_85_left_contact_pad", "robotiq_85_left_finger_link")),
-            frozenset(("robotiq_85_left_contact_pad", "robotiq_85_left_inner_knuckle_link")),
-            frozenset(("robotiq_85_right_contact_pad", "robotiq_85_right_finger_link")),
-            frozenset(("robotiq_85_right_contact_pad", "robotiq_85_right_inner_knuckle_link")),
+            frozenset(("wrist_3_link", "simple_gripper_base_link")),
+            frozenset(("simple_gripper_base_link", "simple_gripper_left_finger_link")),
+            frozenset(("simple_gripper_base_link", "simple_gripper_right_finger_link")),
         }
         self.scene_request_pending = True
         request = GetPlanningScene.Request()
@@ -172,6 +164,7 @@ class ScenePublisher(Node):
         except Exception as error:
             self.get_logger().warning(f'Failed to apply initial planning scene: {error}')
 
+
 def main(args=None):
     rclpy.init(args=args)
     node = ScenePublisher()
@@ -181,6 +174,7 @@ def main(args=None):
         pass
     node.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

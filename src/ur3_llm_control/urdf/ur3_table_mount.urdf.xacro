@@ -3,7 +3,7 @@
   <xacro:arg name="name" default="ur"/>
   <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
   <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.ros2_control.xacro"/>
-  <xacro:include filename="$(find ur3_llm_control)/urdf/robotiq_2f_85_macro_no_mimic.urdf.xacro"/>
+  <xacro:include filename="$(find ur3_llm_control)/urdf/simple_parallel_gripper.urdf.xacro"/>
 
   <xacro:arg name="ur_type" default="ur3"/>
   <xacro:arg name="tf_prefix" default=""/>
@@ -48,43 +48,7 @@
     <origin xyz="0 0 $(arg base_mount_height)" rpy="0 0 0"/>
   </xacro:ur_robot>
 
-  <xacro:robotiq_gripper
-    name="RobotiqGripper"
-    prefix=""
-    parent="tool0"
-    include_ros2_control="false">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
-  </xacro:robotiq_gripper>
-
-  <link name="robotiq_85_left_contact_pad">
-    <collision>
-      <geometry><box size="0.032 0.027 0.055"/></geometry>
-    </collision>
-  </link>
-  <gazebo reference="robotiq_85_left_contact_pad">
-    <mu1>1.5</mu1>
-    <mu2>1.5</mu2>
-  </gazebo>
-  <joint name="robotiq_85_left_contact_pad_joint" type="fixed">
-    <parent link="robotiq_85_left_finger_tip_link"/>
-    <child link="robotiq_85_left_contact_pad"/>
-    <origin xyz="-0.010 0 0.022" rpy="0 0 0"/>
-  </joint>
-
-  <link name="robotiq_85_right_contact_pad">
-    <collision>
-      <geometry><box size="0.032 0.027 0.055"/></geometry>
-    </collision>
-  </link>
-  <gazebo reference="robotiq_85_right_contact_pad">
-    <mu1>1.5</mu1>
-    <mu2>1.5</mu2>
-  </gazebo>
-  <joint name="robotiq_85_right_contact_pad_joint" type="fixed">
-    <parent link="robotiq_85_right_finger_tip_link"/>
-    <child link="robotiq_85_right_contact_pad"/>
-    <origin xyz="0.010 0 0.022" rpy="0 0 0"/>
-  </joint>
+  <xacro:simple_parallel_gripper name="simple_gripper" parent="tool0"/>
 
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
@@ -98,39 +62,4 @@
     tf_prefix="$(arg tf_prefix)"
     transmission_hw_interface="$(arg transmission_hw_interface)"/>
 
-  <ros2_control name="robotiq_gripper" type="system">
-    <hardware>
-      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-    </hardware>
-    <joint name="robotiq_85_left_knuckle_joint">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="robotiq_85_right_knuckle_joint" mimic="false">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="robotiq_85_left_inner_knuckle_joint" mimic="false">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="robotiq_85_right_inner_knuckle_joint" mimic="false">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="robotiq_85_left_finger_tip_joint" mimic="false">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-    <joint name="robotiq_85_right_finger_tip_joint" mimic="false">
-      <command_interface name="position"/>
-      <state_interface name="position"><param name="initial_value">0.0</param></state_interface>
-      <state_interface name="velocity"/>
-    </joint>
-  </ros2_control>
 </robot>
